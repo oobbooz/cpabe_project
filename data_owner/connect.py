@@ -2,7 +2,7 @@ import socket
 import ssl
 import sys
 import os
-
+import json
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
@@ -11,7 +11,30 @@ class Client:
     def __init__(self, host='127.0.0.1', port=10023):
         self.host = host
         self.port = port
-    
+    def send_login_request(self, conn, email, password):
+        try:
+            message = f"login|{email}|{password}"
+            conn.sendall(message.encode('utf-8'))
+
+            response = conn.recv(4096).decode('utf-8')
+            print("Raw response:", response)
+
+            result = json.loads(response)
+
+            if result.get("status") == "ok":
+                return result.get("jwt")
+            else:
+                print("[❌] Login failed:", result.get("message"))
+                return None
+
+        except json.JSONDecodeError:
+            print("[⚠️] Error decoding response: Not valid JSON")
+            return None
+        except Exception as e:
+            print("[❌] Unexpected error during login:", str(e))
+            return None
+        finally:
+            conn.close()
     def connect_to_server(self, mode, username=None, save_path=None, file_name=None):
         context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         certificate_path = os.path.join(current_dir, "resource", "localhost.crt")
@@ -69,7 +92,12 @@ class Client:
                 print("File received successfully.")
                 conn.close()
                 return  
-            
+            elif mode == 'login':
+                if username is None or save_path is None:
+                    print("Please provide email (as username) and password (as save_path).")
+                    conn.close()
+                    return
+                return self.send_login_request(conn, username, save_path)
 
         except Exception as e:
             print("Error:", e)
@@ -102,3 +130,11 @@ if __name__ == "__main__":
             print("Usage: python3 client.py <server_ip> <server_port> get_pub_key <path_to_save> <file_name>")
             sys.exit(1)
         client.connect_to_server(mode, None, sys.argv[4], sys.argv[5])
+    elif mode == 'login':
+        if len(sys.argv) != 6:
+            print("Usage: python3 connect.py <server_ip> <server_port> login <email> <password>")
+            sys.exit(1)
+        email = sys.argv[4]
+        password = sys.argv[5]
+       
+        client.connect_to_server(mode, email, password)

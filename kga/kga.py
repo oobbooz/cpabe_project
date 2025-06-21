@@ -4,6 +4,8 @@ import socket
 import ssl
 import sys
 import os
+import json
+from login_handler import handle_login_request  
 
 class KGA:
     def __init__(self, host='127.0.0.1', port=10023, certfile=None, keyfile=None):
@@ -36,6 +38,7 @@ class KGA:
                     conn.sendall(private_key + b'END_OF_FILE')  
 
                 print('Generated secret key for client:', addr)
+            
         except Exception as e:
             print(f"Error generating secret key for {addr}: {e}")
         finally:
@@ -60,16 +63,33 @@ class KGA:
             if msg == 'setup':
                 self.KGAsetup("setup/")
             elif msg.startswith('genkey|'):
-                self.KGAgenkey(conn, addr, msg, "resource/public_key.bin", "resource/master_key.bin", "resource/private_key.bin")
+                self.KGAgenkey(
+                    conn, addr, msg,
+                    "resource/public_key.bin",
+                    "resource/master_key.bin",
+                    "resource/private_key.bin"
+                )
             elif msg == 'get_pub_key':
                 self.KGASendPubKey(conn, addr, "resource/public_key.bin")
+            elif msg.startswith('login|'):
+                try:
+                    _, email, password = msg.split('|', 2)
+                    payload = {"email": email, "password": password}
+                    result = handle_login_request(payload)
+                    conn.sendall(json.dumps(result).encode('utf-8'))
+                    print(f"Login handled for {email}")
+                except Exception as e:
+                    err_msg = {"status": "error", "message": f"Invalid login format: {e}"}
+                    conn.sendall(json.dumps(err_msg).encode('utf-8'))
             else:
-                conn.sendall('Invalid choice'.encode('utf-8'))
-                print(f"Invalid choice from {addr}")
+                conn.sendall(b'Invalid choice')
+                print(f"Invalid command from {addr}")
         except Exception as e:
             print(f"Error handling request from {addr}: {e}")
+            conn.sendall(json.dumps({"status": "error", "message": str(e)}).encode('utf-8'))
         finally:
             conn.close()
+
 
     def start(self):
         setup_dir = "resource/"
