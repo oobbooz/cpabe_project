@@ -4,7 +4,8 @@ from charm.toolbox.pairinggroup import PairingGroup
 from charm.core.engine.util import objectToBytes, bytesToObject
 import sys
 import shutil
-
+from jwt.exceptions import InvalidTokenError
+import jwt  # PyJWT
 def read_input_file(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
@@ -36,16 +37,36 @@ def setup(cpabe, path):
     print(f"Keys generated and saved to {path}public_key.bin and {path}master_key.bin")
 
 
-def gen_secret_key(cpabe, public_key_file, master_key_file, attributes, private_key_file):
-    public_key = bytesToObject(load_from_file(public_key_file), cpabe.groupObj)
-    master_key = bytesToObject(load_from_file(master_key_file), cpabe.groupObj)
-    
-    user_attributes = attributes.split(',')
-    private_key = cpabe.ac17.keygen(public_key, master_key, user_attributes)
-    
-    serialized_private_key = objectToBytes(private_key, cpabe.groupObj)
-    save_to_file(serialized_private_key, private_key_file)
-    
+def gen_secret_key(cpabe, public_key_file, master_key_file, jwt_token, private_key_file):
+    try:
+        public_key = bytesToObject(load_from_file(public_key_file), cpabe.groupObj)
+        master_key = bytesToObject(load_from_file(master_key_file), cpabe.groupObj)
+
+        with open("resource/ecdsa_public.pem", "r") as f:
+            ca_public_key = f.read()
+
+        payload = jwt.decode(jwt_token, ca_public_key, algorithms=["ES256"])
+        
+        attrs = [
+            payload.get("position", ""),
+            payload.get("role", ""),
+            payload.get("department", ""),
+            payload.get("location", "")
+        ]
+        user_attributes = [attr for attr in attrs if attr]  
+
+        print("🔑 User attributes:", user_attributes)
+
+        private_key = cpabe.ac17.keygen(public_key, master_key, user_attributes)
+        serialized_private_key = objectToBytes(private_key, cpabe.groupObj)
+        save_to_file(serialized_private_key, private_key_file)
+        
+    except InvalidTokenError as e:
+        print("❌ JWT không hợp lệ:", str(e))
+        raise
+    except Exception as e:
+        print("❌ Lỗi tạo khóa:", str(e))
+        raise
     
 def main():
     cpabe = CPABE("AC17")

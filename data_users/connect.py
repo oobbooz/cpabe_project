@@ -3,14 +3,41 @@ import ssl
 import sys
 import os
 from google.cloud import firestore
+import json
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
+
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/bo/Documents/new/data_users/resource/serviceAccount.json"
 sys.path.append(parent_dir)
 class Client:
     def __init__(self, host='127.0.0.1', port=10023):
         self.host = host
         self.port = port
+    
+    def send_login_request(self, conn, email, password):
+        try:
+            message = f"login|{email}|{password}"
+            conn.sendall(message.encode('utf-8'))
+
+            response = conn.recv(4096).decode('utf-8')
+            print("Raw response:", response)
+
+            result = json.loads(response)
+
+            if result.get("status") == "ok":
+                return result.get("jwt")
+            else:
+                print(" Login failed:", result.get("message"))
+                return None
+
+        except json.JSONDecodeError:
+            print(" Error decoding response: Not valid JSON")
+            return None
+        except Exception as e:
+            print(" Unexpected error during login:", str(e))
+            return None
+        finally:
+            conn.close()
 
     def get_attributes_from_db(self, email):
         db = firestore.Client()
@@ -30,16 +57,11 @@ class Client:
 
         return None
         
-    def send_genkey_request(self, conn, username, save_path, file_name):
-        attributes = self.get_attributes_from_db(username)
-        if attributes is None:
-            print("User not found or no attributes available.")
-            return
-        print(attributes)
-        
+    def send_genkey_request(self, conn, jwt_token, save_path, file_name):
         mode = 'genkey'
-        message = f"{mode}|{attributes}"
-        print(message)
+        message = f"{mode}|{jwt_token}"
+        print(f"[📤] Sending JWT to CA for SK generation...")
+
         conn.sendall(message.encode('utf-8'))
 
         with open(os.path.join(save_path, file_name), 'wb') as f:
@@ -49,9 +71,11 @@ class Client:
                     f.write(data.replace(b'END_OF_FILE', b''))
                     break
                 f.write(data)
-        print("File received successfully.")
-        
+
+        print("✅ Secret key received and saved successfully.")
         conn.close()
+
+
     
     def connect_to_server(self, mode, username=None, save_path=None, file_name=None):
         context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
@@ -109,6 +133,12 @@ class Client:
                 print("File received successfully.")
                 conn.close()
                 return  
+            elif mode == 'login':
+                if username is None or save_path is None:
+                    print("Please provide email (as username) and password (as save_path).")
+                    conn.close()
+                    return
+                return self.send_login_request(conn, username, save_path)
             
 
         except Exception as e:
@@ -142,3 +172,11 @@ if __name__ == "__main__":
             print("Usage: python3 client.py <server_ip> <server_port> get_pub_key <path_to_save> <file_name>")
             sys.exit(1)
         client.connect_to_server(mode, None, sys.argv[4], sys.argv[5])
+    elif mode == 'login':
+        if len(sys.argv) != 6:
+            print("Usage: python3 connect.py <server_ip> <server_port> login <email> <password>")
+            sys.exit(1)
+        email = sys.argv[4]
+        password = sys.argv[5]
+       
+        client.connect_to_server(mode, email, password)

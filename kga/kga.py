@@ -25,13 +25,11 @@ class KGA:
 
     def KGAgenkey(self, conn, addr, msg, public_key_file, master_key_file, private_key_file_path):
         try:
-            mode, attributes = msg.split('|', 1)
-            print(f"Mode: {mode}, Attributes: {attributes}")
-            send_attributes = attributes.upper()
-            print(f"Attributes upper: {send_attributes}")
-            
+            mode, jwt_token = msg.split('|', 1)
+            print(f"Mode: {mode}, jwt: {jwt_token}")
+                       
             if mode == 'genkey':
-                gen_secret_key(self.cpabe, public_key_file, master_key_file, send_attributes, private_key_file_path)
+                gen_secret_key(self.cpabe, public_key_file, master_key_file, jwt_token, private_key_file_path)
                 
                 with open(private_key_file_path, 'rb') as private_key_file:
                     private_key = private_key_file.read()

@@ -26,9 +26,8 @@ class DocumentUI:
 
 
     def get_secret_key(self):
-        email = get_email_from_token(self.id_token)
-        if not email:
-            messagebox.showerror("Lỗi", "Token không hợp lệ hoặc đã hết hạn")
+        if not self.id_token:
+            messagebox.showerror("Lỗi", "Không có JWT hợp lệ để yêu cầu khóa.")
             return
 
         save_path = os.getcwd() 
@@ -39,13 +38,14 @@ class DocumentUI:
         try:
             self.client.connect_to_server(
                 mode='genkey',
-                username=email,
+                username=self.id_token,  
                 save_path=save_path,
                 file_name=file_name
             )
             messagebox.showinfo("Thành công", f"Đã nhận secret key tại:\n{save_path}/{file_name}")
         except Exception as e:
             messagebox.showerror("Lỗi", f"Không thể lấy secret key:\n{e}")
+
 
     def get_public_key(self):
         
@@ -59,6 +59,7 @@ class DocumentUI:
             messagebox.showinfo("Thành công", f"Đã nhận public key tại:\n{save_path}/{file_name}")
         except Exception as e:
             messagebox.showerror("Lỗi", f"Không thể lấy public key:\n{e}")
+            
     def decrypt_document(self):
         try:
             secret_key_path = os.path.join(os.getcwd(), "private_key.bin")
