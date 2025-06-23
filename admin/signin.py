@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from connect import Client
-import json
+from connect import AdminClient  
+import json 
 
 class LoginWindow:
     def __init__(self):
@@ -11,11 +11,12 @@ class LoginWindow:
         self.root.configure(bg="#f0f4ff")
         self.root.resizable(False, False)
 
-        self.client = Client(host='127.0.0.1', port=10023)
+        self.client = AdminClient(host='127.0.0.1', port=10023)  
 
         self.setup_ui()
 
     def setup_ui(self):
+        
         style = ttk.Style(self.root)
         style.theme_use("clam")
         style.configure("TLabel", font=("Segoe UI", 13), background="#f0f4ff")
@@ -53,6 +54,9 @@ class LoginWindow:
         btn_login = ttk.Button(self.root, text="Login", command=self.sign_in)
         btn_login.pack(pady=(30, 10), ipadx=10, ipady=5)
 
+        self.root.after(300, lambda: self.entry_email.focus_set())
+
+
     def sign_in(self):
         email = self.entry_email.get().strip()
         password = self.entry_password.get().strip()
@@ -62,11 +66,7 @@ class LoginWindow:
             return
 
         try:
-            raw_response = self.client.connect_to_server(
-                mode='login',
-                username=email,
-                save_path=password
-            )
+            raw_response = self.client.login(email, password)
 
             if raw_response:
                 try:
@@ -75,7 +75,7 @@ class LoginWindow:
                         jwt_token = response["jwt"]
                         messagebox.showinfo("Success", "Login successful!")
                         self.root.destroy()
-                        self.open_document(jwt_token)
+                        self.open_create(jwt_token)
                     else:
                         messagebox.showerror("Login Failed", f"Error: {response.get('message', 'Login unsuccessful.')}")
                 except json.JSONDecodeError:
@@ -83,28 +83,28 @@ class LoginWindow:
                         jwt_token = raw_response
                         messagebox.showinfo("Success", "Login successful!")
                         self.root.destroy()
-                        self.open_document(jwt_token)
+                        self.open_create(jwt_token)
                     else:
                         messagebox.showerror("Error", "Invalid response from server.")
             else:
-                messagebox.showerror("Error", "No response received from server.")
+                messagebox.showerror("Error", "No response from server.")
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred while sending the login request:\n{e}")
+            messagebox.showerror("Error", f"An error occurred during login request:\n{e}")
 
-    def open_document(self, id_token):
+    def open_create(self, id_token):
         try:
-            import document
-        except ImportError as e:
-            messagebox.showerror("Error", f"Document module not found.\nDetails:\n{e}")
+            from create_users import CreateUserWindow
+        except ImportError:
+            messagebox.showerror("Error", "Module 'create_users' not found.")
             return
 
         new_root = tk.Tk()
-        app = document.DocumentUI(new_root, id_token)
+        app = CreateUserWindow(new_root, id_token)
         new_root.mainloop()
+
 
     def run(self):
         self.root.mainloop()
-
 
 if __name__ == "__main__":
     LoginWindow().run()

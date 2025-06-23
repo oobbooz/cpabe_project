@@ -7,7 +7,7 @@ import os
 import json
 from login_handler import handle_login_request  
 
-class KGA:
+class CA:
     def __init__(self, host='127.0.0.1', port=10023, certfile=None, keyfile=None):
         self.host = host
         self.port = port
@@ -16,14 +16,14 @@ class KGA:
         self.is_running = True
         self.cpabe = CPABE("AC17")
 
-    def KGAsetup(self, path):
+    def CAsetup(self, path):
         try:
             setup(self.cpabe, path)
             print('Setup successfully completed.')
         except Exception as e:
             print(f"Error during setup: {e}")
 
-    def KGAgenkey(self, conn, addr, msg, public_key_file, master_key_file, private_key_file_path):
+    def CAgenkey(self, conn, addr, msg, public_key_file, master_key_file, private_key_file_path):
         try:
             mode, jwt_token = msg.split('|', 1)
             print(f"Mode: {mode}, jwt: {jwt_token}")
@@ -44,7 +44,7 @@ class KGA:
                 os.remove(private_key_file_path)
             conn.close()
                 
-    def KGASendPubKey(self, conn, addr, public_key_file):
+    def CASendPubKey(self, conn, addr, public_key_file):
         try:
             with open(public_key_file, 'rb') as public_key_file:
                 public_key = public_key_file.read()
@@ -59,16 +59,16 @@ class KGA:
     def handle_request(self, conn, msg, addr):
         try:
             if msg == 'setup':
-                self.KGAsetup("setup/")
+                self.CAsetup("setup/")
             elif msg.startswith('genkey|'):
-                self.KGAgenkey(
+                self.CAgenkey(
                     conn, addr, msg,
                     "resource/public_key.bin",
                     "resource/master_key.bin",
                     "resource/private_key.bin"
                 )
             elif msg == 'get_pub_key':
-                self.KGASendPubKey(conn, addr, "resource/public_key.bin")
+                self.CASendPubKey(conn, addr, "resource/public_key.bin")
             elif msg.startswith('login|'):
                 try:
                     _, email, password = msg.split('|', 2)
@@ -98,15 +98,14 @@ class KGA:
         master_key_path = os.path.join(setup_dir, "master_key.bin")
 
         if not os.path.exists(public_key_path) or not os.path.exists(master_key_path):
-            print("Chạy setup vì thiếu file khóa")
-            self.KGAsetup(setup_dir)
+            self.CAsetup(setup_dir)
         else:
-            print("Khóa đã tồn tại, bỏ qua bước setup")
+            print("Key already exists. Setup step skipped.")
 
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.bind((self.host, self.port))
         server_socket.listen(5)
-        print(f"KGA listening on {self.host}:{self.port}")
+        print(f"CA listening on {self.host}:{self.port}")
 
         context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         context.load_cert_chain(certfile=self.certfile, keyfile=self.keyfile)
@@ -125,8 +124,8 @@ class KGA:
         server_socket.close()
     
     def setup_key(self, path):
-        self.KGAsetup(path)
+        self.CAsetup(path)
 
 if __name__ == "__main__":
-    kga = KGA(certfile='localhost.crt', keyfile='localhost.key')
-    kga.start()
+    ca = CA(certfile='resource/localhost.crt', keyfile='resource/localhost.key')
+    ca.start()

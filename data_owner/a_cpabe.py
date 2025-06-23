@@ -1,39 +1,37 @@
 import os
 import base64
-import firebase_admin
-from firebase_admin import credentials, firestore
-from dotenv import load_dotenv
 from charm.core.engine.util import bytesToObject
 from CPABE import CPABE 
-
-load_dotenv()
-
-raw_path = os.getenv('SERVICE_ACCOUNT_PATH')
-service_account_path = os.path.expanduser(raw_path)
-
-if not firebase_admin._apps:
-    cred = credentials.Certificate(service_account_path)
-    firebase_admin.initialize_app(cred)
-
-db = firestore.client()
+import requests
+import json 
+from requests.models import Response
 
 cpabe = CPABE("AC17")
-
 def encrypt(public_key_bytes: bytes, message_bytes: bytes, policy: str) -> str:
     public_key = bytesToObject(public_key_bytes, cpabe.groupObj)
     encrypted_str = cpabe.AC17encrypt(public_key, message_bytes, policy)
     return encrypted_str
 
-def save_to_firestore(cipher_str: str, doc_name: str, owner: str, department: str, doc_type: str):
-    doc_ref = db.collection("messages").document()  
-    doc_data = {
-        "ciphertext": cipher_str,
-        "owner": owner,
-        "department": department,
-        "type": doc_type,
-        "name": doc_name if doc_name else doc_ref.id  
+def save_to_firestore_via_function(token: str, resource: dict, document: dict) -> Response:
+    function_url = "https://handle-request-itz4xkhbza-as.a.run.app"
+
+    payload = {
+        "action": "write",
+        "resource": resource,
+        "data": document
     }
+    headers = {
+        "Authorization": f"Bearer {token.strip()}",
+        "Content-Type": "application/json"
+    }
+    try:
+        response = requests.post(function_url, headers=headers, data=json.dumps(payload))
+        print("Response:", response.text)
+        return response  
 
-    doc_ref.set(doc_data)
-    print(f"Document with ID {doc_ref.id} saved successfully.")
-
+    except Exception as e:
+        print("Failed to connect to Cloud Function:", str(e))
+        fake_response = Response()
+        fake_response.status_code = 500
+        fake_response._content = json.dumps({"detail": str(e)}).encode("utf-8")
+        return fake_response

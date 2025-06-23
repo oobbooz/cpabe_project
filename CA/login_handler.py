@@ -4,16 +4,13 @@ import jwt
 import json
 import datetime
 from dotenv import load_dotenv
-
 load_dotenv()
-
 FIREBASE_API_KEY = os.getenv("API_KEY")
 FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID")
 FIREBASE_SIGNIN_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_API_KEY}"
 FIRESTORE_URL = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/databases/(default)/documents/users"
 
-# Đọc private key từ file (ECDSA key)
-with open("ecdsa_private.pem", "r") as f:
+with open("resource/ecdsa_private.pem", "r") as f:
     PRIVATE_KEY = f.read()
 
 def handle_login_request(payload):

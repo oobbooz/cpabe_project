@@ -24,14 +24,14 @@ class Client:
             if result.get("status") == "ok":
                 return result.get("jwt")
             else:
-                print("[❌] Login failed:", result.get("message"))
+                print("Login failed:", result.get("message"))
                 return None
 
         except json.JSONDecodeError:
-            print("[⚠️] Error decoding response: Not valid JSON")
+            print("Error decoding response: Not valid JSON")
             return None
         except Exception as e:
-            print("[❌] Unexpected error during login:", str(e))
+            print("Unexpected error during login:", str(e))
             return None
         finally:
             conn.close()
@@ -40,8 +40,7 @@ class Client:
         certificate_path = os.path.join(current_dir, "resource", "localhost.crt")
         context.load_verify_locations(certificate_path)
         context.check_hostname = False
-        context = ssl._create_unverified_context()
-        print("Connected to the kga")
+        print("Connected to the CA")
         try:
             conn = context.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM), server_hostname=self.host)
             conn.connect((self.host, self.port))
@@ -106,7 +105,7 @@ class Client:
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
-        print("Usage: python3 client.py <server_ip> <server_port> [setup|genkey|get_pub_key] <additional_args>")
+        print("Usage: python3 connect.py <server_ip> <server_port> [setup|genkey|get_pub_key] <additional_args>")
         sys.exit(1)
         
     server_ip = sys.argv[1]
@@ -116,18 +115,18 @@ if __name__ == "__main__":
     
     if mode == 'setup':
         if len(sys.argv) != 6:
-            print("Usage: python3 client.py <server_ip> <server_port> setup <path_to_save> <file_name>")
+            print("Usage: python3 connect.py <server_ip> <server_port> setup <path_to_save> <file_name>")
             sys.exit(1)
         client.connect_to_server(mode, None, sys.argv[4], sys.argv[5])
     elif mode == 'genkey':
         if len(sys.argv) != 7:
-            print("Usage: python3 client.py <server_ip> <server_port> genkey <username> <path_to_save> <file_name>")
+            print("Usage: python3 connect.py <server_ip> <server_port> genkey <username> <path_to_save> <file_name>")
             sys.exit(1)
         username = sys.argv[4]
         client.connect_to_server(mode, username, sys.argv[5], sys.argv[6])
     elif mode == 'get_pub_key':
         if len(sys.argv) != 6:
-            print("Usage: python3 client.py <server_ip> <server_port> get_pub_key <path_to_save> <file_name>")
+            print("Usage: python3 connect.py <server_ip> <server_port> get_pub_key <path_to_save> <file_name>")
             sys.exit(1)
         client.connect_to_server(mode, None, sys.argv[4], sys.argv[5])
     elif mode == 'login':

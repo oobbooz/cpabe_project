@@ -11,18 +11,13 @@ class CPABE:
             self.ac17 = AC17CPABE(self.groupObj, 2)
             self.serialized = SerializeCTXT()
 
-    def AC17decrypt(self,public_key, encrypted_data_b64: str, private_key):
-        
+    def AC17decrypt(self,public_key, encrypted_data_b64: str, secret_key):
         encrypted_data = base64.b64decode(encrypted_data_b64.encode('utf-8'))
-
         len_encrypted_key = int.from_bytes(encrypted_data[:8], byteorder='big')
-
         encrypted_key_b = encrypted_data[8:8 + len_encrypted_key]
         ciphertext = encrypted_data[8 + len_encrypted_key:]
-
         encrypted_key = self.serialized.unjsonify_ctxt(encrypted_key_b.decode('utf-8'))
-
-        recovered_random_key = self.ac17.decrypt(public_key, encrypted_key, private_key)
+        recovered_random_key = self.ac17.decrypt(public_key, encrypted_key, secret_key)
 
         if recovered_random_key:
             nonce = ciphertext[:16]

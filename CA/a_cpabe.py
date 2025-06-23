@@ -5,7 +5,8 @@ from charm.core.engine.util import objectToBytes, bytesToObject
 import sys
 import shutil
 from jwt.exceptions import InvalidTokenError
-import jwt  # PyJWT
+import jwt  
+
 def read_input_file(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
@@ -55,17 +56,17 @@ def gen_secret_key(cpabe, public_key_file, master_key_file, jwt_token, private_k
         ]
         user_attributes = [attr for attr in attrs if attr]  
 
-        print("🔑 User attributes:", user_attributes)
+        print("User attributes:", user_attributes)
 
         private_key = cpabe.ac17.keygen(public_key, master_key, user_attributes)
         serialized_private_key = objectToBytes(private_key, cpabe.groupObj)
         save_to_file(serialized_private_key, private_key_file)
         
     except InvalidTokenError as e:
-        print("❌ JWT không hợp lệ:", str(e))
+        print("JWT không hợp lệ:", str(e))
         raise
     except Exception as e:
-        print("❌ Lỗi tạo khóa:", str(e))
+        print("Lỗi tạo khóa:", str(e))
         raise
     
 def main():

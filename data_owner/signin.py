@@ -1,20 +1,22 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from connect import Client  # ✅ Import class Client từ connect.py
+from connect import Client  
 import json 
+
 class LoginWindow:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Login to Your Account")
-        self.root.geometry("900x700")
+        self.root.geometry("900x500")
         self.root.configure(bg="#f0f4ff")
         self.root.resizable(False, False)
 
-        self.client = Client(host='127.0.0.1', port=10023)  # ✅ Khởi tạo client kết nối tới CA/KGA
+        self.client = Client(host='127.0.0.1', port=10023)  
 
         self.setup_ui()
 
     def setup_ui(self):
+        
         style = ttk.Style(self.root)
         style.theme_use("clam")
         style.configure("TLabel", font=("Segoe UI", 13), background="#f0f4ff")
@@ -52,15 +54,13 @@ class LoginWindow:
         btn_login = ttk.Button(self.root, text="Login", command=self.sign_in)
         btn_login.pack(pady=(30, 10), ipadx=10, ipady=5)
 
-        btn_signup = ttk.Button(self.root, text="Back to Sign Up", command=self.back_to_signup)
-        btn_signup.pack(pady=(0, 20), ipadx=10, ipady=5)
 
     def sign_in(self):
         email = self.entry_email.get().strip()
         password = self.entry_password.get().strip()
 
         if not email or not password:
-            messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập cả email và mật khẩu.")
+            messagebox.showwarning("Missing Information", "Please enter both email and password.")
             return
 
         try:
@@ -70,52 +70,42 @@ class LoginWindow:
                 save_path=password
             )
 
-            print("Raw response:", raw_response)  # Debug
+            print("Raw response:", raw_response)  
 
             if raw_response:
-                # Thử parse JSON trước
                 try:
                     response = json.loads(raw_response)
-                    # Nếu đúng là dict có key "status" và "jwt"
                     if isinstance(response, dict) and response.get("status") == "ok" and "jwt" in response:
                         jwt_token = response["jwt"]
-                        messagebox.showinfo("✅ Thành công", "Đăng nhập thành công!")
+                        messagebox.showinfo("Success", "Login successful!")
                         self.root.destroy()
-                        self.open_encrypt_ui(jwt_token)
+                        self.open_encrypt(jwt_token)
                     else:
-                        messagebox.showerror("❌ Thất bại", f"Lỗi: {response.get('message', 'Đăng nhập không thành công')}")
+                        messagebox.showerror("Login Failed", f"Error: {response.get('message', 'Login unsuccessful.')}")
                 except json.JSONDecodeError:
-                    # Nếu không phải JSON, có thể là chuỗi JWT thẳng
-                    if raw_response.startswith("eyJ"):  # Kiểm tra xem có phải JWT không
+                    if raw_response.startswith("eyJ"):  
                         jwt_token = raw_response
-                        messagebox.showinfo("✅ Thành công", "Đăng nhập thành công!")
+                        messagebox.showinfo("Success", "Login successful!")
                         self.root.destroy()
-                        self.open_encrypt_ui(jwt_token)
+                        self.open_encrypt(jwt_token)
                     else:
-                        messagebox.showerror("Lỗi", "Phản hồi không hợp lệ từ máy chủ.")
+                        messagebox.showerror("Error", "Invalid response from server.")
             else:
-                messagebox.showerror("Lỗi", "Không nhận được phản hồi từ máy chủ.")
+                messagebox.showerror("Error", "No response from server.")
         except Exception as e:
-            messagebox.showerror("Lỗi", f"Lỗi khi gửi yêu cầu đăng nhập:\n{e}")
+            messagebox.showerror("Error", f"An error occurred during login request:\n{e}")
 
-    def open_encrypt_ui(self, id_token):
+    def open_encrypt(self, id_token):
         try:
-            import encrypt_ui
+            import encrypt
         except ImportError:
-            messagebox.showerror("Error", "encrypt_ui module not found.")
+            messagebox.showerror("Error", "Module 'encrypt' not found.")
             return
 
         new_root = tk.Tk()
-        app = encrypt_ui.UploadApp(new_root, id_token)
+        app = encrypt.UploadApp(new_root, id_token)
         new_root.mainloop()
 
-    def back_to_signup(self):
-        self.root.destroy()
-        try:
-            import signup
-            signup.main()
-        except ImportError:
-            messagebox.showerror("Error", "signup module not found.")
 
     def run(self):
         self.root.mainloop()

@@ -1,0 +1,5 @@
+email,password,fullName,department,location,position,role
+hanhIT@gmail.com,123456,Nguyen Thi My Hanh,IT,HCM,DEV,EMPLOYEE
+tuSALES@gmail.com,SecurePass456,Tran Anh Tu,HR,HN,ACCOUNTANT,EMPLOYEE
+dangIT@gmail.com,MyPass789,Do Hai Dang,IT,HCM,TESTER,EMPLOYEE
+myanhHR@gmail.com,Test@2024,Pham Thi My Anh,SALES,HCM,SALESREP,EMPLOYEE
