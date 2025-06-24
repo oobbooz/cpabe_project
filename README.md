@@ -1,14 +1,15 @@
 # **Cryptography-Project**
+Project: Attribute-Based Data Security Combined with Access Control for Cloud Applications in Small Enterprises
 ---
 
-## **📌 Description**
+## ** Description**
 This project provides a secure data sharing system that enables organizations to encrypt, store, and control access to sensitive documents using a combination of symmetric encryption (**AES-GCM**), attribute-based encryption (**CP-ABE**), and **JSON Web Tokens (JWT)** for authentication and access control.
 
 The system is designed to meet real-world enterprise needs, where documents must be shared among users with different roles, departments, and privileges — while preventing unauthorized access, even from cloud service providers.
 
 ---
 
-## **🚀 Key Features**
+## ** Key Features**
 
 - **End-to-end encryption**  
   Documents are encrypted on the client side using AES-GCM, ensuring both confidentiality and integrity.
@@ -30,7 +31,7 @@ The system is designed to meet real-world enterprise needs, where documents must
 
 ---
 
-## **🧪 Technologies Used**
+## ** Technologies Used**
 
 - **Charm-Crypto** – CP-ABE encryption (AC17 scheme)  
 - **PyCryptodome** – AES-GCM symmetric encryption  
@@ -43,13 +44,13 @@ This system demonstrates a practical implementation of attribute-based encryptio
 
 ---
 
-## **📐 Architecture Diagram**
+## ** Architecture Diagram**
 
 ![System Architecture](./resource/architecture.png)
 
 ---
 
-## **🎥 Demo**
+## ** Demo**
 
 [▶ Watch Demo on Google Drive](https://drive.google.com/file/d/1Ye6jNHj0Rb4mE2pladXWWg8_LpPnT0ya/view?usp=sharing)
 
