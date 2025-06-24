@@ -25,5 +25,5 @@ This system demonstrates a practical implementation of attribute-based encryptio
 ![System Architecture](./resource/architecture.png)
 ---
 ## **Demo**
-[Watch Demo on Google Drive](https://drive.google.com/file/d/YOUR_FILE_ID/view)
+[Watch Demo on Google Drive](https://drive.google.com/file/d/1Ye6jNHj0Rb4mE2pladXWWg8_LpPnT0ya/view?usp=sharing)
 ---
